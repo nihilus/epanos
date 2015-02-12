@@ -119,8 +119,7 @@ def get_data(segs, cpp_in):
                 for (refs, ea) in refs_eas
                 if has_got_seg_in_data_refs(refs))
     declstrs = '\n'.join([x[2] for x in data])
-    decls = izip(data,
-                 cdecl.get_decls(declstrs, cpp_in).decls[utils.cpp_decomp_tag])
+    decls = izip(data, cdecl.get_decls(declstrs, cpp_in).decls[utils.cpp_decomp_tag])
     return map(gen, decls)
 
 def get_fns_and_types(segs, wanted_fns, cpp_in):

@@ -22,12 +22,12 @@ except:
 
 def run(decompile=True):
     # change cpp path/args as needed
-    pycparser_dir = r'%s\local\pycparser\utils' % os.environ['HOMEPATH']
+    pycparser_dir = r'%s/pycparser/utils' % os.path.dirname(os.path.abspath(__file__))
     decomp_dir = os.path.dirname(os.path.abspath(__file__))
-    cpppath = r'%s\cpp.exe' % pycparser_dir
+    cpppath = r'%s/cpp.exe' % pycparser_dir
     cppargs = [
         r'-I%s' % path for path in
-        (r'%s\fake_libc_include' % pycparser_dir,
+        (r'%s/fake_libc_include' % pycparser_dir,
          decomp_dir)]
     decomp.set_cpp(cpppath, cppargs)
 
