@@ -96,11 +96,8 @@ def internal_call(callee):
             c_ast.ID('%s' % utils.args_tag)]))
 
 
-ep_ctypes = Enum('ep_ctypes', [
-    'schar', 'uchar', 'short', 'ushort', 'int', 'uint', 'longint', 'ulongint',
-    'longlongint', 'ulonglongint', 'float', 'double', 'char', 'pointer'])
-slot_types = Enum('slot_types', ['s', 'd', 'i8', 'u8', 'i16', 'u16',
-                                 'i32', 'u32', 'i64', 'u64', '_'])
+ep_ctypes = Enum('ep_ctypes', ['schar', 'uchar', 'short', 'ushort', 'int', 'uint', 'longint', 'ulongint', 'longlongint', 'ulonglongint', 'float', 'double', 'char', 'pointer'])
+slot_types = Enum('slot_types', ['s', 'd', 'i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', '_'])
 
 slot_to_typename = {
     slot_types.s: simple_typename(['float']),

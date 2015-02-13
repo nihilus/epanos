@@ -92,8 +92,7 @@ def size_of(ti):
 
 def print_tinfo(name, ti):
     '''str -> tinfo_t -> str'''
-    return idaapi.print_tinfo('', 0, 0, idaapi.PRTYPE_1LINE | idaapi.PRTYPE_SEMI,
-                              ti, name, '')
+    return idaapi.print_tinfo('', 0, 0, idaapi.PRTYPE_1LINE | idaapi.PRTYPE_SEMI, ti, name, '')
 
 
 def print_type2(ea):
@@ -287,8 +286,7 @@ def get_op(ea, op, stkvars=None):
 
 def calc_target(from_, ea, n, opval):
     '''ea_t -> ea_t -> int -> int -> ea_t'''
-    return idaapi.calc_target(
-        from_, ea, mips_op_hack(idautils.DecodeInstruction(ea), n), opval)
+    return idaapi.calc_target(from_, ea, mips_op_hack(idautils.DecodeInstruction(ea), n), opval)
 
 
 def get_switch_info(ea):

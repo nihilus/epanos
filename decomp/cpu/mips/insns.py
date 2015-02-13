@@ -97,12 +97,8 @@ trunc_w_d(double x)
 }
 '''
 
-mips_insn = namedtuple('mips_insn', ['insn', 'slots', 'opfs', 'ty', 'subty',
-                                     'subst', 'result'])
-types = Enum('insn_ty',
-             ['op', 'load', 'store', 'jump', 'fbranch', 'branch', 'slt',
-              'call', 'jr', 'delay', 'fcmp', 'nop', 'la', 'li', 'lui',
-              'usefn'])
+mips_insn = namedtuple('mips_insn', ['insn', 'slots', 'opfs', 'ty', 'subty', 'subst', 'result'])
+types = Enum('insn_ty', ['op', 'load', 'store', 'jump', 'fbranch', 'branch', 'slt', 'call', 'jr', 'delay', 'fcmp', 'nop', 'la', 'li', 'lui', 'usefn'])
 subtypes = Enum('subtypes', ['zero', 'likely', 'zimm', '_'])
 opnd_types = Enum('opnd_types', ['fpr', 'gpr', 'imm', 'loc', 'spec', 'addr'])
 
@@ -146,7 +142,6 @@ insns = create_insn_table()
 
 # XXX MIPS III-specific stuff in here, e.g. ancient MIPS has load delays, but
 # newer MIPS does not
-delayed = create_insn_type_table(
-    insns, [types.jump, types.fbranch, types.branch, types.call, types.jr])
+delayed = create_insn_type_table(insns, [types.jump, types.fbranch, types.branch, types.call, types.jr])
 has_special_opnd = create_insn_uses_opnd_type_table(insns, opnd_types.spec)
 has_imm = create_insn_uses_opnd_type_table(insns, opnd_types.imm)

@@ -68,16 +68,12 @@ scanf_types = [
 ]
 
 printf_sw = make_stdio_sw(p_Arg_type, printf_types, pointerize=False)
-printf_sw[p_Arg_type.TYPE_POINTER] = ep_ct.ptr(
-    ep_ct.simple_typename(['void']))
-printf_sw[p_Arg_type.TYPE_STRING] = ep_ct.ptr(
-    ep_ct.simple_typename(['char']))
+printf_sw[p_Arg_type.TYPE_POINTER] = ep_ct.ptr(ep_ct.simple_typename(['void']))
+printf_sw[p_Arg_type.TYPE_STRING] = ep_ct.ptr(ep_ct.simple_typename(['char']))
 
 scanf_sw = make_stdio_sw(s_Arg_type, scanf_types, pointerize=True)
-scanf_sw[s_Arg_type.TYPE_POINTER] = ep_ct.ptr(ep_ct.ptr(
-    ep_ct.simple_typename(['void'])))
-scanf_sw[s_Arg_type.TYPE_STRING] = ep_ct.ptr(
-    ep_ct.simple_typename(['char']))
+scanf_sw[s_Arg_type.TYPE_POINTER] = ep_ct.ptr(ep_ct.ptr(ep_ct.simple_typename(['void'])))
+scanf_sw[s_Arg_type.TYPE_STRING] = ep_ct.ptr(ep_ct.simple_typename(['char']))
 scanf_sw[s_Arg_type.TYPE_CHARSEQ] = scanf_sw[s_Arg_type.TYPE_STRING]
 
 

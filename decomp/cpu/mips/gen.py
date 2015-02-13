@@ -117,12 +117,8 @@ def do_fbranch(**kw):
 def do_fcmp(**kw):
     # if ({rs} {subst} {rt}) fp_cond = 1; else fp_cond = 0
     fragment = ep_ct.do_branch(**kw)
-    fragment.iftrue = ep_ct.do_assign(
-        rt=c_ast.ID('%sfp_cond' % utils.decomp_tag),
-        op=c_ast.Constant('int', '1'))
-    fragment.iffalse = ep_ct.do_assign(
-        rt=c_ast.ID('%sfp_cond' % utils.decomp_tag),
-        op=c_ast.Constant('int', '0'))
+    fragment.iftrue = ep_ct.do_assign(rt=c_ast.ID('%sfp_cond' % utils.decomp_tag), op=c_ast.Constant('int', '1'))
+    fragment.iffalse = ep_ct.do_assign(rt=c_ast.ID('%sfp_cond' % utils.decomp_tag), op=c_ast.Constant('int', '0'))
     return fragment
 
 
@@ -172,8 +168,7 @@ def create_insn_to_c_table(tbl):
     }
 
     return {x.insn: insn_tmpls[x.ty] for x in tbl.itervalues()
-            if x.ty not in [insns.types.usefn, insns.types.call,
-                            insns.types.jr]}
+            if x.ty not in [insns.types.usefn, insns.types.call, insns.types.jr]}
 
 
 insns_c = create_insn_to_c_table(insns.insns)
@@ -192,8 +187,7 @@ def extern_call(callee, sig, mnem, ea):
     else:
         if sig.arg_regs[-1] is c_ast.EllipsisParam:
             va_arg = data.get_arg_for_va_function(callee, ea)
-            params = (list(utils.init(sig.arg_regs))
-                      + abi.get_args_for_va_function(callee, va_arg))
+            params = (list(utils.init(sig.arg_regs)) + abi.get_args_for_va_function(callee, va_arg))
         else:
             params = sig.arg_regs
 
@@ -225,9 +219,7 @@ def do_switch_or_return(ea):
                      for (addr, loc) in sw.cases.iteritems())
         (mnem, opnd, opn) = data.get_swval(ea)
         swval = fmt_op(opnd, mnem, opn)
-        return c_ast.Switch(swval,
-                            c_ast.Compound(
-                                cases + defexpr))
+        return c_ast.Switch(swval, c_ast.Compound(cases + defexpr))
 
 
 def get_formatter(mnem):
@@ -260,16 +252,11 @@ def make_args_for_formatter(insn, vals):
               else opvals[1])
         return dict(izip(['subst', 'rs', 'rt'], [insn.subst, opvals[0], rt]))
 
-    subst_3op = lambda insn, opvals: dict(
-        izip(['subst', 'result', 'rd', 'rs', 'rt'],
-             [insn.subst, insn.result] + opvals))
+    subst_3op = lambda insn, opvals: dict(izip(['subst', 'result', 'rd', 'rs', 'rt'], [insn.subst, insn.result] + opvals))
     sw = {
         insns.types.op: subst_3op,
-        insns.types.jump: lambda insn, opvals: dict(
-            izip(['loc'], opvals)),
-        insns.types.fbranch: lambda insn, opvals: dict(
-            izip(['subst', 'loc'],
-                 [insn.subst] + opvals)),
+        insns.types.jump: lambda insn, opvals: dict(izip(['loc'], opvals)),
+        insns.types.fbranch: lambda insn, opvals: dict(izip(['subst', 'loc'], [insn.subst] + opvals)),
         insns.types.branch: subst_rs_rt,
         insns.types.fcmp: subst_rs_rt,
         insns.types.load: simple_2op,
@@ -278,8 +265,7 @@ def make_args_for_formatter(insn, vals):
         insns.types.la: simple_2op,
         insns.types.li: simple_2op,
         insns.types.lui: simple_2op,
-        insns.types.call: lambda insn, opvals: dict(
-            izip(['rs'], opvals))
+        insns.types.call: lambda insn, opvals: dict(izip(['rs'], opvals))
     }
     try:
         return sw[insn.ty](insn, vals)
@@ -288,8 +274,7 @@ def make_args_for_formatter(insn, vals):
 
 
 def fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay):
-    '''ea_t -> frozenset(str) -> {str : reg_sig} -> {int : c_ast()} ->
-    (ea_t, str)'''
+    '''ea_t -> frozenset(str) -> {str : reg_sig} -> {int : c_ast()} -> (ea_t, str)'''
     # XXX this function is too long and its interaction with the formatter steps
     # is not very clear
     # NOTE mutation in a few places
@@ -354,21 +339,13 @@ def fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay):
         # any non-number as the final operand should be handled according to
         # fmt_op's usual rules
         arg = fmt_op(opvals[-1], mnem)
-        assign = labelize(
-            ea,
-            ep_ct.do_assign(rt=reg, op=ep_ct.cast_to_dest_reg(insn, arg)))
+        assign = labelize(ea, ep_ct.do_assign(rt=reg, op=ep_ct.cast_to_dest_reg(insn, arg)))
         return next_ea_and_c(next_ea, [assign])
 
     if mnem == 'trunc.w.d':
         # emulate trunc.w.d with our function
-        vals = [fmt_reg(mnem, opvals[0].val, insn.result),
-                fmt_reg(mnem, opvals[1].val, insn.slots[0])]
-        return next_ea_and_c(
-            next_ea,
-            [labelize(
-                ea,
-                ep_ct.make_call(insn.subst, ret_reg=vals[0],
-                                args=ep_ct.args_for_call([vals[1]])))])
+        vals = [fmt_reg(mnem, opvals[0].val, insn.result), fmt_reg(mnem, opvals[1].val, insn.slots[0])]
+        return next_ea_and_c(next_ea, [labelize(ea, ep_ct.make_call(insn.subst, ret_reg=vals[0], args=ep_ct.args_for_call([vals[1]])))])
     elif mnem in ['jalr', 'jr']:
         # jalr and jr need special handling
         vals = []
@@ -395,15 +372,7 @@ def fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay):
             # need to swap the order of arguments for a store, since loads and
             # stores are written in the same direction, but they aren't in C!
             args = list(reversed(vals) if mnem.startswith('s') else vals)
-            return next_ea_and_c(
-                next_ea,
-                [labelize(
-                    ea,
-                    ep_ct.make_call(
-                        insn.subst, args=ep_ct.args_for_call(
-                            [args[0],
-                             args[1],
-                             c_ast.Constant('int', str(size))])))])
+            return next_ea_and_c(next_ea, [labelize(ea, ep_ct.make_call(insn.subst, args=ep_ct.args_for_call([args[0], args[1], c_ast.Constant('int', str(size))])))])
         else:
             raise utils.BugError('unhandled usefn instruction %s' % mnem)
     else:
@@ -412,8 +381,7 @@ def fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay):
     if is_delayed is True:
         # format our delayed instruction before processing this instruction--but
         # see below for an important note about the case of branch likely
-        (_, delay_slot) = fmt_insn(delay_ea, our_fns, extern_reg_map, stkvars,
-                                   from_delay=True)
+        (_, delay_slot) = fmt_insn(delay_ea, our_fns, extern_reg_map, stkvars, from_delay=True)
         # branch target
         loc = opvals[-1].val
 
@@ -432,8 +400,7 @@ def fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay):
                     # of comments, as it would make the emitted codemuch easier
                     # to follow.  just alert the user that we couldn't make some
                     # calls for now
-                    print ('/* %s: no regmap info, emitting empty stmt at %s */'
-                           % (callee, ida.atoa(ea)))
+                    print ('/* %s: no regmap info, emitting empty stmt at %s */' % (callee, ida.atoa(ea)))
                     delayed = ep_ct.do_nop()
                 else:
                     delayed = extern_call(callee, sig, mnem, ea)
@@ -444,9 +411,7 @@ def fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay):
         if insns.subtypes.likely in insn.subty:
             # for branch likely, the delay slot is NOT executed if the branch is
             # not taken
-            delayed.iftrue = c_ast.Compound(delay_slot +
-                                            [goto,
-                                             labelize(delay_ea, delay_slot[0])])
+            delayed.iftrue = c_ast.Compound(delay_slot + [goto, labelize(delay_ea, delay_slot[0])])
             ret = labelize(ea, delayed)
         else:
             if insn.ty in [insns.types.branch, insns.types.fbranch]:
