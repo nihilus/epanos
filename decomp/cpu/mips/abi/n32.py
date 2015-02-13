@@ -1,8 +1,8 @@
 from functools import partial
 from itertools import chain, izip
 from pycparser import c_ast
-from pyc_fmtstr_parser import printf_parse, Arg_type as p_Arg_type
-from pyc_fmtstr_parser import scanf_parse, Arg_type as s_Arg_type
+from pyc_fmtstr_parser.printf_parse import printf_parse, Arg_type as p_Arg_type
+from pyc_fmtstr_parser.scanf_parse import scanf_parse, Arg_type as s_Arg_type
 from decomp import ida, utils
 from decomp.c import decl as cdecl, types as ep_ct
 from decomp.cpu import ida as cpu_ida, regs
