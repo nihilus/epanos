@@ -7,7 +7,8 @@ the **E**lectro**P*aint **A**utomatic **N**o-source **O**bject rea**S**sembler
 
 ### Who?
 
-http://github.com/drvink
+http://github.com/drvink - Original code
+http://github.com/nihilus - Current code
 
 ### What?
 
@@ -32,19 +33,6 @@ version comes after 6.5 should contain all the fixes that are needed
 to produce the code used in ElectroPortis.
 
 [IDA]: http://www.hex-rays.com
-
-The decompiler depends on these libraries:
-
-* [pycparser](http://github.com/eliben/pycparser)
-* [flufl.enum](http://pythonhosted.org/flufl.enum/)
-* [pyc-fmtstr-parser](http://github.com/drvink/pyc-fmtstr-parser)
-
-The decompiler is not a push-button solution: some small annotations to the IDA
-database were needed to produce fully-working code.  If you wish to use it on
-your own target, you will probably want to modify it to do data/bss segment
-extraction in a saner way.  The easiest thing would probably be to just lift
-them out and treat them opaquely, i.e. as a char[], and then handle endianness
-issues accordingly.
 
 ### Why?
 
