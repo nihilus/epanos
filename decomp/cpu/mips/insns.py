@@ -17,8 +17,8 @@ from decomp.c import types as ep_ct
 # subst: an argument for the function that handles this insn
 # result: cast rvalue to this or use this slot for lvalue
 #
-#insn       opslots      opfs          type      subtypes      subst       result
-insn_fmts='''
+# insn       opslots      opfs          type      subtypes      subst       result
+insn_fmts = '''
 add.d,      d d d,       fpr fpr fpr,  op,       _,            +,          _
 add.s,      s s s,       fpr fpr fpr,  op,       _,            +,          _
 addiu,      u64 u32 _,   gpr gpr imm,  op,       _,            +,          i32
@@ -106,10 +106,13 @@ types = Enum('insn_ty',
 subtypes = Enum('subtypes', ['zero', 'likely', 'zimm', '_'])
 opnd_types = Enum('opnd_types', ['fpr', 'gpr', 'imm', 'loc', 'spec', 'addr'])
 
+
 def create_insn_table():
     '''unit -> {str : mips_insn}'''
+
     def make_insn(fmt):
         '''[str] -> (str, mips_insn)'''
+
         def split(arg, ty):
             fields = re.split(r'\s+', arg)
             return list(ty[x] for x in fields)
@@ -121,21 +124,23 @@ def create_insn_table():
         subty = split(subty, subtypes) if subty != '_' else []
         result = ep_ct.slot_types[result]
 
-        return (insn, mips_insn(
-            insn, slots, opfs, types[ty], subty, subst, result))
+        return (insn, mips_insn(insn, slots, opfs, types[ty], subty, subst, result))
 
     lines = [y for y in insn_fmts.splitlines()
              if re.search(r'^#|^$', y) is None]
 
     return dict(make_insn(x) for x in lines)
 
+
 def create_insn_type_table(insns, ty):
     '''{str : mips_insn} -> [insn_ty] -> frozenset(str)'''
     return frozenset(x.insn for x in insns.itervalues() if x.ty in ty)
 
+
 def create_insn_uses_opnd_type_table(insns, ty):
     return frozenset(x.insn for x in insns.itervalues()
                      if filter(None, [ty == y for y in x.opfs]))
+
 
 insns = create_insn_table()
 

@@ -20,6 +20,7 @@
 
 import ctypes
 from flufl.enum import Enum
+
 sizeof = ctypes.sizeof
 
 Arg_type = Enum('Arg_type', [str(x.strip()) for x in '''
@@ -48,18 +49,20 @@ TYPE_COUNT_LONGINT_POINTER
 TYPE_COUNT_LONGLONGINT_POINTER
 '''.splitlines() if x != ''])
 
-FLAG_GROUP    = 1   # ' flag
-FLAG_LEFT     = 2   # - flag
-FLAG_SHOWSIGN = 4   # + flag
-FLAG_SPACE    = 8   # space flag
-FLAG_ALT      = 16  # # flag
-FLAG_ZERO     = 32
+FLAG_GROUP = 1  # ' flag
+FLAG_LEFT = 2  # - flag
+FLAG_SHOWSIGN = 4  # + flag
+FLAG_SPACE = 8  # space flag
+FLAG_ALT = 16  # # flag
+FLAG_ZERO = 32
 
 # arg_index value indicating that no argument is consumed.
 ARG_NONE = ~0
 
+
 class Argument(object):
     __slots__ = ['type', 'data']
+
 
 class Arguments(object):
     __slots__ = ['count', 'arg']
@@ -67,6 +70,7 @@ class Arguments(object):
     def __init__(self):
         self.count = 0
         self.arg = []
+
 
 class Directive(object):
     '''A parsed directive.'''
@@ -86,6 +90,7 @@ class Directive(object):
         self.precision_arg_index = ARG_NONE
         self.arg_index = ARG_NONE
 
+
 class Directives(object):
     '''A parsed format string.'''
     __slots__ = ['count', 'dir', 'max_width_length', 'max_precision_length']
@@ -93,6 +98,7 @@ class Directives(object):
     def __init__(self):
         self.count = 0
         self.dir = []
+
 
 def REGISTER_ARG(a, index, type):
     n = index
@@ -108,6 +114,7 @@ def REGISTER_ARG(a, index, type):
         a.arg[n].type = type
     elif a.arg[n].type != type:
         raise ValueError('ambiguous type for positional argument')
+
 
 def conv_signed(c, flags):
     # If 'long long' exists and is larger than 'long':
@@ -126,6 +133,7 @@ def conv_signed(c, flags):
             type = Arg_type.TYPE_INT
         return c, type
 
+
 def conv_unsigned(c, flags):
     # If 'long long' exists and is larger than 'long':
     if flags >= 16 or flags & 4:
@@ -143,11 +151,13 @@ def conv_unsigned(c, flags):
             type = Arg_type.TYPE_UINT
         return c, type
 
+
 def conv_float(c, flags):
     if flags >= 16 or flags & 4:
         return c, Arg_type.TYPE_LONGDOUBLE
     else:
         return c, Arg_type.TYPE_DOUBLE
+
 
 def conv_char(c, flags):
     if flags >= 8:
@@ -155,9 +165,11 @@ def conv_char(c, flags):
     else:
         return c, Arg_type.TYPE_CHAR
 
+
 def conv_widechar(c, flags):
     c = 'c'
     return c, Arg_type.TYPE_WIDE_CHAR
+
 
 def conv_string(c, flags):
     if flags >= 8:
@@ -165,12 +177,15 @@ def conv_string(c, flags):
     else:
         return c, Arg_type.TYPE_STRING
 
+
 def conv_widestring(c, flags):
     c = 's'
     return c, Arg_type.TYPE_WIDE_STRING
 
+
 def conv_pointer(c, flags):
     return c, Arg_type.TYPE_POINTER
+
 
 def conv_intpointer(c, flags):
     # If 'long long' exists and is larger than 'long':
@@ -189,8 +204,10 @@ def conv_intpointer(c, flags):
             type = Arg_type.TYPE_COUNT_INT_POINTER
         return c, type
 
+
 def conv_none(c, flags):
     return c, Arg_type.TYPE_NONE
+
 
 _conv_char = {
     'd': conv_signed,
@@ -216,13 +233,14 @@ _conv_char = {
     '%': conv_none
 }
 
+
 def printf_parse(fmt):
     '''Parses the format string.  Fills in the number N of directives, and fills
     in directives[0], ..., directives[N-1], and sets directives[N].dir_start to
     the end of the format string.  Also fills in the arg_type fields of the
     arguments and the needed count of arguments.'''
-    cp = 0                   # index into format string
-    arg_posn = 0             # number of regular arguments consumed
+    cp = 0  # index into format string
+    arg_posn = 0  # number of regular arguments consumed
     max_width_length = 0
     max_precision_length = 0
 

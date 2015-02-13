@@ -23,8 +23,7 @@ __all__ = [
     'Enum',
     'IntEnum',
     'make',
-    ]
-
+]
 
 import re
 import warnings
@@ -35,7 +34,6 @@ SPACE = ' '
 IDENTIFIER_RE = r'[a-zA-Z_][a-zA-Z0-0_]*'
 
 
-
 class EnumMetaclass(type):
     """Meta class for Enums."""
 
@@ -63,9 +61,7 @@ class EnumMetaclass(type):
             if hasattr(basecls, '__value_factory__'):
                 basecls_factory = basecls.__value_factory__
                 if factory is not None and basecls_factory != factory:
-                    raise TypeError(
-                        'Conflicting enum factory in base class: %s'
-                        % basecls_factory)
+                    raise TypeError('Conflicting enum factory in base class: %s' % basecls_factory)
                 factory = basecls_factory
         # Set the factory default if necessary.
         if factory is None:
@@ -76,7 +72,7 @@ class EnumMetaclass(type):
         # instance so we can return the same object on conversion.
         for attr in attributes:
             if not (attr.startswith('__') and attr.endswith('__')):
-                value  = attributes[attr]
+                value = attributes[attr]
                 enumval = factory(cls, value, attr)
                 if value in cls._enums:
                     raise ValueError('Multiple enum values: %s' % value)
@@ -115,35 +111,32 @@ class EnumMetaclass(type):
     def __call__(cls, *args):
         # One-argument calling is a deprecated synonym for getitem.
         if len(args) == 1:
-            warnings.warn('MyEnum(arg) is deprecated; use MyEnum[arg]',
-                          DeprecationWarning, 2)
+            warnings.warn('MyEnum(arg) is deprecated; use MyEnum[arg]', DeprecationWarning, 2)
             return cls.__getitem__(args[0])
         name, source = args
         return _make(cls, name, source)
 
 
-
 class EnumValue:
     """Class to represent an enumeration value.
 
     EnumValue('Color', 'red', 12) prints as 'Color.red' and can be converted
     to the integer 12.
     """
+
     def __init__(self, enum, value, name):
         self._enum = enum
         self._value = value
         self._name = name
 
     def __repr__(self):
-        return '<EnumValue: {0}.{1} [value={2}]>'.format(
-            self._enum.__name__, self._name, self._value)
+        return '<EnumValue: {0}.{1} [value={2}]>'.format(self._enum.__name__, self._name, self._value)
 
     def __str__(self):
         return '{0}.{1}'.format(self._enum.__name__, self._name)
 
     def __int__(self):
-        warnings.warn('int() is deprecated; use IntEnums',
-                      DeprecationWarning, 2)
+        warnings.warn('int() is deprecated; use IntEnums', DeprecationWarning, 2)
         return self._value
 
     def __reduce__(self):
@@ -185,10 +178,9 @@ class EnumValue:
 # and Python 3.
 Enum = EnumMetaclass(str('Enum'), (), {
     '__doc__': 'The public API Enum class.',
-    })
+})
 
 
-
 class IntEnumValue(int, EnumValue):
     """An EnumValue that is also an integer."""
 
@@ -214,13 +206,11 @@ class IntEnumValue(int, EnumValue):
     __index__ = __int__
 
 
-
 class IntEnum(Enum):
     """A specialized enumeration with values that are also integers."""
     __value_factory__ = IntEnumValue
 
 
-
 if str is bytes:
     # Python 2
     STRING_TYPE = basestring
@@ -294,6 +284,5 @@ def make(name, source):
     :raises ValueError: when a heterogeneous source is given, or when
         non-identifiers are used as enumeration value names.
     """
-    warnings.warn('make() is deprecated; use Enum(name, source)',
-                  DeprecationWarning, 2)
+    warnings.warn('make() is deprecated; use Enum(name, source)', DeprecationWarning, 2)
     return _make(Enum, name, source)

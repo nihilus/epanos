@@ -43,13 +43,14 @@ typedef struct EPANOS_ARGS {
 gen_from_node = c_generator.CGenerator().visit
 flatten = chain.from_iterable
 
+
 def c_for_insn(ea, our_fns, extern_reg_map, stkvars):
     while True:
-        (ea, c) = cpu_ida.ida_current_cpu().gen.fmt_insn(
-            ea, our_fns, extern_reg_map, stkvars, from_delay=False)
+        (ea, c) = cpu_ida.ida_current_cpu().gen.fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay=False)
         yield c
         if ea == ida.BADADDR:
             break
+
 
 def generate(ea, decl, our_fns, extern_reg_map, stkvar_map, stkvar_decls):
     '''ea_t -> c_ast() -> frozenset(str) -> {str : reg_sig} ->
@@ -63,41 +64,29 @@ def generate(ea, decl, our_fns, extern_reg_map, stkvar_map, stkvar_decls):
 
     start_ea = ida.get_func(ea).startEA
     body = [XXX_STACKVAR_HACK()] + [var_decls] + [x for x in
-        c_for_insn(start_ea, our_fns, extern_reg_map, stkvars)]
+                                                  c_for_insn(start_ea, our_fns, extern_reg_map, stkvars)]
     funcdef = c_ast.FuncDef(decl, None, c_ast.Compound(flatten(body)))
 
     return funcdef
 
+
 def XXX_STACKVAR_HACK():
     # XXX FIXME this will be going away once we've added elision of unnecessary
     # stack variables (probably will just stick declarations into the AST)
-    regs = list(
-        c_ast.Decl(
-            x, [], [], [],
-            c_ast.TypeDecl(
-                x, [],
-                c_ast.IdentifierType(
-                    ['EPANOS_REG'])),
-            None, None)
+    regs = list(c_ast.Decl(x, [], [], [], c_ast.TypeDecl(x, [], c_ast.IdentifierType(['EPANOS_REG'])), None, None)
         for x in
         list('t%s' % str(n) for n in range(4, 8))
         + list('s%s' % str(n) for n in range(0, 8))
         + ['at', 't8', 't9', 'gp', 'sp', 'ra', 'fp', 'f1']
         + list('f%s' % str(n) for n in range(3, 12))
         + list('f%s' % str(n) for n in range(20, 32)))
-    regs += [
-        c_ast.Decl(
-            'EPANOS_fp_cond', [], [], [],
-            c_ast.TypeDecl(
-                'EPANOS_fp_cond', [],
-                c_ast.IdentifierType(
-                    ['int'])),
-            None, None)]
+    regs += [c_ast.Decl('EPANOS_fp_cond', [], [], [], c_ast.TypeDecl('EPANOS_fp_cond', [], c_ast.IdentifierType(['int'])), None, None)]
     return regs
+
 
 def run(externs, our_fns, cpp_filter, cpp_all, decompile=True):
     '''frozenset(str) -> frozenset(str) -> str -> str -> opt:bool -> [c_ast]'''
-    global OUR_FNS, EXTERN_REG_MAP, STKVAR_MAP # for repl convenience
+    global OUR_FNS, EXTERN_REG_MAP, STKVAR_MAP  # for repl convenience
     OUR_FNS = our_fns
 
     fn_segs = data.get_segs(['extern', '.text'])
@@ -126,7 +115,7 @@ def run(externs, our_fns, cpp_filter, cpp_all, decompile=True):
     protos = map(cdecl.make_internal_fn_decl, our_fns)
 
     (lib_fns, tds) = data.get_fns_and_types(fn_segs, externs, cpp_all)
-    all_tds = {x.name : x for x in tds}
+    all_tds = {x.name: x for x in tds}
     typedefs = cdecl.resolve_typedefs(all_tds)
     EXTERN_REG_MAP = data.get_fn_arg_map(lib_fns, typedefs)
     STKVAR_MAP = data.get_stkvars(our_fns)
@@ -142,6 +131,7 @@ def run(externs, our_fns, cpp_filter, cpp_all, decompile=True):
                  for decl in protos)))
     else:
         return
+
 
 def repl_make_insn(ea, from_delay):
     # for testing: print the C that will be generated from a line of assembly.

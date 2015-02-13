@@ -1,6 +1,7 @@
 import os, sys
 import idc
 
+
 def ep_unload():
     global decomp
     try:
@@ -14,11 +15,13 @@ def ep_unload():
     except AttributeError:
         pass
 
+
 try:
     import decomp
 except:
     ep_unload()
     raise
+
 
 def run(decompile=True):
     # change cpp path/args as needed
@@ -66,6 +69,7 @@ def run(decompile=True):
 
     return decomp.run(externs, text_fns, cpp_filter, cpp_all, decompile)
 
+
 intro = '''
 #include <stdlib.h>
 #include <stdio.h>
@@ -85,4 +89,4 @@ if __name__ == '__main__':
         print intro
         print run(decompile=True)
     else:
-        run(decompile=False) # just load it (for interactive use/testing)
+        run(decompile=False)  # just load it (for interactive use/testing)

@@ -14,6 +14,8 @@ flatten = chain.from_iterable
 # $f0,$f2 and $f12..f19 for fp return/args
 
 class RegSpillError(Exception): pass
+
+
 class StructByValueError(Exception): pass
 
 # WARNING: this must be in the same order as c.types.ep_ctypes!
@@ -24,18 +26,19 @@ c_type_to_slot = zip(
      [ep_ct.slot_types[y] for y in
       ['i8',  # signed char
        'u8',  # unsigned char
-       'i16', # short
-       'u16', # unsigned short
-       'i32', # int
-       'u32', # unsigned int
-       'i32', # long
-       'u32', # unsigned long
-       'i64', # long long
-       'u64', # unsigned long long
-       's',   # float
-       'd',   # double
-       'i8'   # char
-       ]]])
+       'i16',  # short
+       'u16',  # unsigned short
+       'i32',  # int
+       'u32',  # unsigned int
+       'i32',  # long
+       'u32',  # unsigned long
+       'i64',  # long long
+       'u64',  # unsigned long long
+       's',  # float
+       'd',  # double
+       'i8'  # char
+      ]]])
+
 
 def make_stdio_sw(fmt_type, types, pointerize):
     '''enum -> [str] -> bool -> dict'''
@@ -44,10 +47,11 @@ def make_stdio_sw(fmt_type, types, pointerize):
     fmt_to_type = izip([fmt_type[x] for x in types],
                        c_type_to_slot)
 
-    return {ty : (ep_ct.ptr(val)
-                  if pointerize is True
-                  else val)
+    return {ty: (ep_ct.ptr(val)
+                 if pointerize is True
+                 else val)
             for (ty, (_, val)) in fmt_to_type}
+
 
 printf_types = [
     'TYPE_SCHAR', 'TYPE_UCHAR', 'TYPE_SHORT', 'TYPE_USHORT',
@@ -76,9 +80,10 @@ scanf_sw[s_Arg_type.TYPE_STRING] = ep_ct.ptr(
     ep_ct.simple_typename(['char']))
 scanf_sw[s_Arg_type.TYPE_CHARSEQ] = scanf_sw[s_Arg_type.TYPE_STRING]
 
+
 def n32ify_regs(regs):
     '''[str] -> [str]'''
-    n32_map = {'$t0' : '$a4', '$t1' : '$a5', '$t2' : '$a6', '$t3' : '$a7'}
+    n32_map = {'$t0': '$a4', '$t1': '$a5', '$t2': '$a6', '$t3': '$a7'}
     r = enumerate(regs)
 
     return list(n32_map[reg] if reg in n32_map else regs[i] for (i, reg) in r)
@@ -89,22 +94,24 @@ reg_list = n32ify_regs(cpu_ida.ida_reg_list())
 fpr_off = reg_list.index('$f0')
 # callee-saved registers
 saveregs = frozenset(flatten([
-    xrange(16, 24), # $s0..$s7
-    xrange(28, 31), # $gp, $sp, $fp
-    xrange(fpr_off + 20, fpr_off + 32, 2) # $f20..$f31, evens
+    xrange(16, 24),  # $s0..$s7
+    xrange(28, 31),  # $gp, $sp, $fp
+    xrange(fpr_off + 20, fpr_off + 32, 2)  # $f20..$f31, evens
 ]))
 
 # gpr and fpr argument and return registers
-arg_regs = list(xrange(4, 12)) # $a0..$a7
-fp_arg_regs = list(xrange(fpr_off + 12, fpr_off + 20)) # $f12..$f19
-ret_regs = list([2, 3]) # $v0..$v1
-fp_ret_regs = list([fpr_off, fpr_off + 2]) # $f0,$f2
+arg_regs = list(xrange(4, 12))  # $a0..$a7
+fp_arg_regs = list(xrange(fpr_off + 12, fpr_off + 20))  # $f12..$f19
+ret_regs = list([2, 3])  # $v0..$v1
+fp_ret_regs = list([fpr_off, fpr_off + 2])  # $f0,$f2
 
 # registers that we pass via the ARGS struct
 regs_by_reference = frozenset(arg_regs + fp_arg_regs + ret_regs + fp_ret_regs)
 
+
 def type_to_reg_and_slot(node, chooser, i):
     '''c_ast -> fn -> int -> (reg_type, slot_type) | None'''
+
     def yield_void():
         # return an empty list for (void) arglists
         raise StopIteration
@@ -124,10 +131,10 @@ def type_to_reg_and_slot(node, chooser, i):
         return (ty(base + i), slot)
 
     sw = {
-        c_ast.Decl : lambda x: type_to_reg_and_slot(x.type, chooser, i),
-        c_ast.TypeDecl : lambda x: type_to_reg_and_slot(x.type, chooser, i),
-        c_ast.Typename : lambda x: type_to_reg_and_slot(x.type, chooser, i),
-        c_ast.IdentifierType : lambda x: get(x.names)
+        c_ast.Decl: lambda x: type_to_reg_and_slot(x.type, chooser, i),
+        c_ast.TypeDecl: lambda x: type_to_reg_and_slot(x.type, chooser, i),
+        c_ast.Typename: lambda x: type_to_reg_and_slot(x.type, chooser, i),
+        c_ast.IdentifierType: lambda x: get(x.names)
     }
 
     if i > 7:
@@ -147,12 +154,13 @@ def type_to_reg_and_slot(node, chooser, i):
     else:
         return utils.dictswitch(node_ty, sw, node, maybe_fail, node)
 
+
 def get_info_for_types(nodes, caster, chooser, pos=0, handle_va=False):
     '''[c_ast] -> fn -> fn -> int -> bool ->
     (reg_type, slot_type) | c_ast.EllipsisParam | None'''
     # nodes: a list of Decls from a FuncDecl
     # caster: use this function to produce casts to arg types (see 'castify' in
-    #         c.decl)
+    # c.decl)
     # chooser: a function that will determine the register number for a return
     #          value or argument
     # pos: number of a positional argument (0-indexed)
@@ -165,6 +173,7 @@ def get_info_for_types(nodes, caster, chooser, pos=0, handle_va=False):
             type_to_reg_and_slot(node, chooser, i) + (caster(node),)
             for (i, node) in enumerate(nodes, pos)]
 
+
 def va_chooser(gpr_base, _, ti):
     '''int -> int -> tinfo_t -> (type, int, slot_ty)'''
     if ti.is_float():
@@ -175,6 +184,7 @@ def va_chooser(gpr_base, _, ti):
         slot = ep_ct.slot_types.u64
     return (regs.gpr, gpr_base, slot)
 
+
 def pos_chooser(gpr_base, fpr_base, ti):
     '''int -> int -> tinfo_t -> (type, int, slot_ty)'''
     if ti.is_float():
@@ -184,10 +194,12 @@ def pos_chooser(gpr_base, fpr_base, ti):
     else:
         return (regs.gpr, gpr_base, ep_ct.slot_types.u64)
 
+
 pos_wrap = partial(pos_chooser, 4, 12)
 # varargs of *any* type are passed in $a0..$a7 on N32 (the second argument to
 # the partially-applied va_chooser is unused)
 va_wrap = partial(va_chooser, 4, 12)
+
 
 def get_abi_fn_arg_map(node):
     '''c_ast -> fn_sig'''
@@ -197,23 +209,25 @@ def get_abi_fn_arg_map(node):
     caster = lambda x: cdecl.castify(x.type)
     rtype = utils.items_or_default(
         lambda: get_info_for_types([node], caster, ret_chooser)[0],
-        None) # if void return type, return None
+        None)  # if void return type, return None
 
     args = [x for (_, x) in node.args.children()]
     arg_types = utils.items_or_default(
         lambda: list(get_info_for_types(args, caster, pos_wrap)),
-        []) # if function takes no args, return empty list
+        [])  # if function takes no args, return empty list
 
     return ep_ct.fn_sig(rtype, arg_types)
 
+
 def get_args_for_va_function(callee, pos_arg):
     '''str -> str -> [(reg_type, slot_type) | None]'''
+
     def get_convs(acc, va_arg):
         return acc + [sw[va_arg.type]]
 
-    pos_sw = {'printf' : (1, printf_sw, printf_parse, va_wrap),
-              'scanf' : (1, scanf_sw, scanf_parse, pos_wrap),
-              'sscanf' : (2, scanf_sw, scanf_parse, pos_wrap)}
+    pos_sw = {'printf': (1, printf_sw, printf_parse, va_wrap),
+              'scanf': (1, scanf_sw, scanf_parse, pos_wrap),
+              'sscanf': (2, scanf_sw, scanf_parse, pos_wrap)}
     try:
         (pos, sw, fn, chooser) = pos_sw[callee]
     except KeyError:

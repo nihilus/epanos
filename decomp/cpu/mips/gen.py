@@ -9,9 +9,11 @@ from decomp.cpu.mips import abi, data, insns
 
 next_ea_and_c = namedtuple('next_ea_and_c', ['next_ea', 'c'])
 
+
 def reg_strip(arg):
     # generally here the "arg" is a register object whose __str__ will be called
     return re.sub(r'^\$', '', str(arg))
+
 
 def fmt_reg(mnem, arg, slot=None):
     '''str -> int -> reg -> opt:slot_types -> str'''
@@ -25,8 +27,7 @@ def fmt_reg(mnem, arg, slot=None):
         regnum = arg.reg + (abi.fpr_off if type(arg) is regs.fpr else 0)
         if regnum in abi.regs_by_reference:
             # refer to argument via ARGS->
-            r = c_ast.StructRef(c_ast.ID(utils.args_tag), '->',
-                                c_ast.ID(stripped))
+            r = c_ast.StructRef(c_ast.ID(utils.args_tag), '->', c_ast.ID(stripped))
         else:
             r = c_ast.ID(stripped)
 
@@ -36,14 +37,14 @@ def fmt_reg(mnem, arg, slot=None):
         else:
             return r
 
+
 def fmt_op(arg, mnem, op=None):
     '''op_ty -> str -> opt:int -> c_ast()'''
     insn = insns.insns[mnem]
 
     def addrof_or_deref(arg):
         # since addiu cannot touch memory, it must be calculating an address
-        if mnem == 'addiu' or (insn.ty == insns.types.usefn and
-                               insn.subst == 'memcpy'):
+        if mnem == 'addiu' or (insn.ty == insns.types.usefn and insn.subst == 'memcpy'):
             return c_ast.UnaryOp('&', arg)
         else:
             return arg
@@ -69,18 +70,17 @@ def fmt_op(arg, mnem, op=None):
             return c_ast.ID(arg.val)
         elif arg.ty == ida.op_ty.name:
             return c_ast.UnaryOp('&', c_ast.ID(arg.val))
-        else: # an address
+        else:  # an address
             return c_ast.Constant('int', str(arg.val))
     elif arg.ty == ida.op_ty.array:
         (idx, rem) = ida.item_off(arg.target)
-        arr = c_ast.ArrayRef(c_ast.ID(arg.val), c_ast.Constant('int',
-                                                               str(idx)))
+        arr = c_ast.ArrayRef(c_ast.ID(arg.val), c_ast.Constant('int', str(idx)))
 
         return addrof_or_deref(arr)
         # retained in case we ever come across some strange pointer math.  this
         # will generate a nonsense lvalue anyway, so we'd need to handle it some
         # other way
-        #left = addrof_or_deref(arr)
+        # left = addrof_or_deref(arr)
         #return c_ast.BinaryOp('+', left, c_ast.Constant('int', str(rem)))
     elif arg.ty == ida.op_ty.ptr:
         # dereferencing of pointers is handled by the "displ" case, so just
@@ -89,7 +89,7 @@ def fmt_op(arg, mnem, op=None):
 
         return c_ast.ID(arg.val)
         # same as above
-        #return c_ast.BinaryOp('+',
+        # return c_ast.BinaryOp('+',
         #                      c_ast.ID(arg.val),
         #                      c_ast.Constant('int', str(rem)))
     elif arg.ty == ida.op_ty.name:
@@ -97,8 +97,7 @@ def fmt_op(arg, mnem, op=None):
         return addrof_or_deref(nameval)
     elif arg.ty == ida.op_ty.displ:
         r = fmt_reg(mnem, arg.val.reg, ep_ct.slot_types.u32)
-        off = c_ast.BinaryOp(
-            '+', r, c_ast.Constant('int', str(arg.val.displ)))
+        off = c_ast.BinaryOp('+', r, c_ast.Constant('int', str(arg.val.displ)))
         tyns = ['char' if insns.types.usefn and insn.subst == 'memcpy'
                 else insn.subst]
         cast = ep_ct.simple_cast(ep_ct.ptr(ep_ct.simple_typename(tyns)), off)
@@ -110,11 +109,13 @@ def fmt_op(arg, mnem, op=None):
     else:
         return c_ast.Constant('int', str(arg.val))
 
+
 def do_fbranch(**kw):
     return c_ast.If(c_ast.ID(kw['subst']), ep_ct.do_jump(**kw), None)
 
+
 def do_fcmp(**kw):
-    #if ({rs} {subst} {rt}) fp_cond = 1; else fp_cond = 0
+    # if ({rs} {subst} {rt}) fp_cond = 1; else fp_cond = 0
     fragment = ep_ct.do_branch(**kw)
     fragment.iftrue = ep_ct.do_assign(
         rt=c_ast.ID('%sfp_cond' % utils.decomp_tag),
@@ -124,15 +125,14 @@ def do_fcmp(**kw):
         op=c_ast.Constant('int', '0'))
     return fragment
 
+
 def do_slt(**kw):
-    #if (({subst}){rs} < ({subst}){rt}) {rd} = 1; else {rd} = 0;
+    # if (({subst}){rs} < ({subst}){rt}) {rd} = 1; else {rd} = 0;
     def cast(which):
-        return ep_ct.simple_cast(ep_ct.simple_typename([kw['subst']]),
-                                 which)
+        return ep_ct.simple_cast(ep_ct.simple_typename([kw['subst']]), which)
 
     def assign(to):
-        return ep_ct.do_assign(rt=kw['rd'],
-                                op=c_ast.Constant('int', to))
+        return ep_ct.do_assign(rt=kw['rd'], op=c_ast.Constant('int', to))
 
     br = ep_ct.do_branch(subst='<', rs=cast(kw['rs']), rt=cast(kw['rt']))
     br.iftrue = assign('1')
@@ -140,40 +140,44 @@ def do_slt(**kw):
 
     return br
 
+
 def do_store(**kw):
-    #{op} = {rt}
+    # {op} = {rt}
     return ep_ct.do_assign(rt=kw['op'], op=kw['rt'])
 
+
 def do_lui(**kw):
-    #{rt} = {op} << 16
+    # {rt} = {op} << 16
     return ep_ct.do_assign(rt=kw['rt'], op=ep_ct.simple_cast(
         ep_ct.slot_to_typename[kw['result']],
-        c_ast.BinaryOp(
-            '<<', kw['op'], c_ast.Constant('int', '16'))))
+        c_ast.BinaryOp('<<', kw['op'], c_ast.Constant('int', '16'))))
+
 
 def create_insn_to_c_table(tbl):
     '''{str : mips_insn} -> {str : fun}'''
     insn_tmpls = {
-        insns.types.op : ep_ct.do_op,
-        insns.types.jump : ep_ct.do_jump,
-        insns.types.fbranch : do_fbranch,
+        insns.types.op: ep_ct.do_op,
+        insns.types.jump: ep_ct.do_jump,
+        insns.types.fbranch: do_fbranch,
         # as branch likely complicates things, "branch" is a partial template
-        insns.types.branch : ep_ct.do_branch, #'if ({rs} {subst} {rt})',
-        insns.types.fcmp : do_fcmp,
-        insns.types.load : ep_ct.do_assign,
-        insns.types.store : do_store,
-        insns.types.nop : ep_ct.do_nop,
-        insns.types.slt : do_slt,
-        insns.types.la : ep_ct.do_assign,
-        insns.types.li : ep_ct.do_assign,
-        insns.types.lui : do_lui
+        insns.types.branch: ep_ct.do_branch,  # 'if ({rs} {subst} {rt})',
+        insns.types.fcmp: do_fcmp,
+        insns.types.load: ep_ct.do_assign,
+        insns.types.store: do_store,
+        insns.types.nop: ep_ct.do_nop,
+        insns.types.slt: do_slt,
+        insns.types.la: ep_ct.do_assign,
+        insns.types.li: ep_ct.do_assign,
+        insns.types.lui: do_lui
     }
 
-    return {x.insn : insn_tmpls[x.ty] for x in tbl.itervalues()
+    return {x.insn: insn_tmpls[x.ty] for x in tbl.itervalues()
             if x.ty not in [insns.types.usefn, insns.types.call,
                             insns.types.jr]}
 
+
 insns_c = create_insn_to_c_table(insns.insns)
+
 
 def extern_call(callee, sig, mnem, ea):
     '''str -> fn_sig -> str -> ea_t -> c_ast'''
@@ -202,13 +206,13 @@ def extern_call(callee, sig, mnem, ea):
     else:
         (reg, slot, rtype) = sig.return_type
         ret_reg = fmt_reg(mnem, reg, slot)
-        return ep_ct.make_call(callee, ret_reg=ret_reg, args=fn_args,
-                               for_extern=rtype)
+        return ep_ct.make_call(callee, ret_reg=ret_reg, args=fn_args, for_extern=rtype)
+
 
 def do_switch_or_return(ea):
     if ida.is_ret_insn(ea):
         return c_ast.Return(None)
-    else: # switch
+    else:  # switch
         try:
             sw = ida.switch_cases(ea)
         except ida.NoSwitchError:
@@ -225,12 +229,14 @@ def do_switch_or_return(ea):
                             c_ast.Compound(
                                 cases + defexpr))
 
+
 def get_formatter(mnem):
     '''str -> fn'''
     try:
         return insns_c[mnem]
     except KeyError:
         raise utils.BugError("%s: couldn't find formatter" % mnem)
+
 
 def make_args_for_formatter(insn, vals):
     '''mips_insn -> <dyn> -> [<dyn>]'''
@@ -246,41 +252,40 @@ def make_args_for_formatter(insn, vals):
         op = (ep_ct.cast_to_dest_reg(insn, opvals[1])
               if insn.insn == 'la'
               else opvals[1])
-        return dict(izip(['result', 'rt', 'op'],
-                         [insn.result, opvals[0], op]))
+        return dict(izip(['result', 'rt', 'op'], [insn.result, opvals[0], op]))
 
     def subst_rs_rt(insn, opvals):
         rt = (c_ast.Constant('int', '0')
-              if insns.subtypes.zero in insn.subty # for beqz, bgez, etc.
+              if insns.subtypes.zero in insn.subty  # for beqz, bgez, etc.
               else opvals[1])
-        return dict(izip(['subst', 'rs', 'rt'],
-                         [insn.subst, opvals[0], rt]))
+        return dict(izip(['subst', 'rs', 'rt'], [insn.subst, opvals[0], rt]))
 
     subst_3op = lambda insn, opvals: dict(
         izip(['subst', 'result', 'rd', 'rs', 'rt'],
              [insn.subst, insn.result] + opvals))
     sw = {
-        insns.types.op : subst_3op,
-        insns.types.jump : lambda insn, opvals: dict(
+        insns.types.op: subst_3op,
+        insns.types.jump: lambda insn, opvals: dict(
             izip(['loc'], opvals)),
-        insns.types.fbranch : lambda insn, opvals: dict(
+        insns.types.fbranch: lambda insn, opvals: dict(
             izip(['subst', 'loc'],
                  [insn.subst] + opvals)),
-        insns.types.branch : subst_rs_rt,
-        insns.types.fcmp : subst_rs_rt,
-        insns.types.load : simple_2op,
-        insns.types.store : simple_2op,
-        insns.types.slt : subst_3op,
-        insns.types.la : simple_2op,
-        insns.types.li : simple_2op,
-        insns.types.lui : simple_2op,
-        insns.types.call : lambda insn, opvals: dict(
+        insns.types.branch: subst_rs_rt,
+        insns.types.fcmp: subst_rs_rt,
+        insns.types.load: simple_2op,
+        insns.types.store: simple_2op,
+        insns.types.slt: subst_3op,
+        insns.types.la: simple_2op,
+        insns.types.li: simple_2op,
+        insns.types.lui: simple_2op,
+        insns.types.call: lambda insn, opvals: dict(
             izip(['rs'], opvals))
     }
     try:
         return sw[insn.ty](insn, vals)
     except KeyError:
         return {}
+
 
 def fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay):
     '''ea_t -> frozenset(str) -> {str : reg_sig} -> {int : c_ast()} ->
@@ -419,7 +424,7 @@ def fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay):
 
             if callee in our_fns:
                 delayed = ep_ct.internal_call(callee)
-            else: # external function call
+            else:  # external function call
                 try:
                     sig = extern_reg_map[callee]
                 except KeyError:
@@ -432,7 +437,7 @@ def fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay):
                     delayed = ep_ct.do_nop()
                 else:
                     delayed = extern_call(callee, sig, mnem, ea)
-        else: # some other sort of delayed insn
+        else:  # some other sort of delayed insn
             delayed = get_formatter(mnem)(**args)
 
         goto = c_ast.Goto(loc)
@@ -449,9 +454,7 @@ def fmt_insn(ea, our_fns, extern_reg_map, stkvars, from_delay):
                 delayed.iffalse = labelize(delay_ea, delay_slot[0])
                 ret = labelize(ea, delayed)
             else:
-                ret = labelize(ea,
-                               c_ast.Compound([labelize(delay_ea, delay_slot[0]),
-                                               delayed]))
+                ret = labelize(ea, c_ast.Compound([labelize(delay_ea, delay_slot[0]), delayed]))
         return next_ea_and_c(next_ea, [ret])
 
     return next_ea_and_c(next_ea, [labelize(ea, get_formatter(mnem)(**args))])
