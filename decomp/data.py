@@ -76,7 +76,7 @@ def get_data(segs, cpp_in):
         ptr = ida.can_be_off32(ea)
         if ptr not in [ida.BADADDR, 0]:
             ptr_ti = ida.get_or_guess_tinfo(ptr)
-            ti_node = cdecl.get_decls(declstr).decls[utils.cpp_decomp_tag][0]
+            ti_node = cdecl.get_decls(declstr, cpp_in).decls[utils.cpp_decomp_tag][0]
             return gen(((ptr_ti, ptr, ''), ti_node))
         # XXX our data segment has no strings, but that's probably specific to
         # the one binary we're dealing with

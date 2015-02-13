@@ -96,8 +96,7 @@ def get_decls(decls, cpp_in='', wanted=frozenset()):
     ({str : [c_ast]}, [c_ast])'''
     if cpp_in != '':
         decls = cpp.preprocess('%s\n%s' % (cpp_in, decls))
-    return process_ast(parser.parse(decls, filename=utils.cpp_decomp_tag),
-                       wanted)
+    return process_ast(parser.parse(decls, filename=utils.cpp_decomp_tag), wanted)
 
 def resolve_typedefs(nodes):
     '''[c_ast()] -> {(str*) : (str*)}'''
