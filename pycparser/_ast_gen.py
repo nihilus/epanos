@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------
+# -----------------------------------------------------------------
 # _ast_gen.py
 #
 # Generates the AST Node classes from a specification given in
@@ -21,7 +21,7 @@ class ASTCodeGenerator(object):
         """
         self.cfg_filename = cfg_filename
         self.node_cfg = [NodeCfg(name, contents)
-            for (name, contents) in self.parse_cfgfile(cfg_filename)]
+                         for (name, contents) in self.parse_cfgfile(cfg_filename)]
 
     def generate(self, file=None):
         """ Generates the code into file, an open file buffer.
@@ -63,6 +63,7 @@ class NodeCfg(object):
         contents: a list of contents - attributes and child nodes
         See comment at the top of the configuration file for details.
     """
+
     def __init__(self, name, contents):
         self.name = name
         self.all_entries = []
@@ -111,15 +112,15 @@ class NodeCfg(object):
 
             for child in self.child:
                 src += (
-                    '        if self.%(child)s is not None:' +
-                    ' nodelist.append(("%(child)s", self.%(child)s))\n') % (
-                        dict(child=child))
+                           '        if self.%(child)s is not None:' +
+                           ' nodelist.append(("%(child)s", self.%(child)s))\n') % (
+                           dict(child=child))
 
             for seq_child in self.seq_child:
                 src += (
-                    '        for i, child in enumerate(self.%(child)s or []):\n'
-                    '            nodelist.append(("%(child)s[%%d]" %% i, child))\n') % (
-                        dict(child=seq_child))
+                           '        for i, child in enumerate(self.%(child)s or []):\n'
+                           '            nodelist.append(("%(child)s[%%d]" %% i, child))\n') % (
+                           dict(child=seq_child))
 
             src += '        return tuple(nodelist)\n'
         else:
@@ -133,7 +134,7 @@ class NodeCfg(object):
 
 
 _PROLOGUE_COMMENT = \
-r'''#-----------------------------------------------------------------
+    r'''#-----------------------------------------------------------------
 # ** ATTENTION **
 # This code was automatically generated from the file:
 # $cfg_filename
@@ -265,9 +266,9 @@ class NodeVisitor(object):
 
 '''
 
-
 if __name__ == "__main__":
     import sys
+
     ast_gen = ASTCodeGenerator('_c_ast.cfg')
     ast_gen.generate(open('c_ast.py', 'w'))
 

@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------
+# -----------------------------------------------------------------
 # pycparser: __init__.py
 #
 # This package file exports some convenience functions for
@@ -39,14 +39,10 @@ def preprocess_file(filename, cpp_path='cpp', cpp_args=''):
         # Note the use of universal_newlines to treat all newlines
         # as \n for Python's purpose
         #
-        pipe = Popen(   path_list,
-                        stdout=PIPE,
-                        universal_newlines=True)
+        pipe = Popen(path_list, stdout=PIPE, universal_newlines=True)
         text = pipe.communicate()[0]
     except OSError as e:
-        raise RuntimeError("Unable to invoke 'cpp'.  " +
-            'Make sure its path was passed correctly\n' +
-            ('Original error: %s' % e))
+        raise RuntimeError("Unable to invoke 'cpp'.  " + 'Make sure its path was passed correctly\n' + ('Original error: %s' % e))
 
     return text
 
@@ -91,4 +87,3 @@ def parse_file(filename, use_cpp=False, cpp_path='cpp', cpp_args='',
     if parser is None:
         parser = CParser()
     return parser.parse(text, filename)
-

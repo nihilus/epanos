@@ -65,15 +65,9 @@ class CParser(PLYParser):
                 Generate a parser.out file that explains how yacc
                 built the parsing table from the grammar.
         """
-        self.clex = CLexer(
-            error_func=self._lex_error_func,
-            on_lbrace_func=self._lex_on_lbrace_func,
-            on_rbrace_func=self._lex_on_rbrace_func,
-            type_lookup_func=self._lex_type_lookup_func)
+        self.clex = CLexer(error_func=self._lex_error_func, on_lbrace_func=self._lex_on_lbrace_func, on_rbrace_func=self._lex_on_rbrace_func, type_lookup_func=self._lex_type_lookup_func)
 
-        self.clex.build(
-            optimize=lex_optimize,
-            lextab=lextab)
+        self.clex.build(optimize=lex_optimize, lextab=lextab)
         self.tokens = self.clex.tokens
 
         rules_with_opt = [
@@ -95,12 +89,7 @@ class CParser(PLYParser):
         for rule in rules_with_opt:
             self._create_opt_rule(rule)
 
-        self.cparser = yacc.yacc(
-            module=self,
-            start='translation_unit_or_empty',
-            debug=yacc_debug,
-            optimize=yacc_optimize,
-            tabmodule=yacctab)
+        self.cparser = yacc.yacc(module=self, start='translation_unit_or_empty', debug=yacc_debug, optimize=yacc_optimize, tabmodule=yacctab)
 
         # Stack of scopes for keeping track of symbols. _scope_stack[-1] is
         # the current (topmost) scope. Each scope is a dictionary that
@@ -132,10 +121,7 @@ class CParser(PLYParser):
         self.clex.reset_lineno()
         self._scope_stack = [dict()]
         self._last_yielded_token = None
-        return self.cparser.parse(
-                input=text,
-                lexer=self.clex,
-                debug=debuglevel)
+        return self.cparser.parse(input=text, lexer=self.clex, debug=debuglevel)
 
     ######################--   PRIVATE   --######################
 
@@ -150,9 +136,7 @@ class CParser(PLYParser):
         """ Add a new typedef name (ie a TYPEID) to the current scope
         """
         if not self._scope_stack[-1].get(name, True):
-            self._parse_error(
-                "Typedef %r previously declared as non-typedef "
-                "in this scope" % name, coord)
+            self._parse_error("Typedef %r previously declared as non-typedef in this scope" % name, coord)
         self._scope_stack[-1][name] = True
 
     def _add_identifier(self, name, coord):
@@ -161,8 +145,7 @@ class CParser(PLYParser):
         """
         if self._scope_stack[-1].get(name, False):
             self._parse_error(
-                "Non-typedef %r previously declared as typedef "
-                "in this scope" % name, coord)
+                "Non-typedef %r previously declared as typedef in this scope" % name, coord)
         self._scope_stack[-1][name] = False
 
     def _is_type_in_scope(self, name):
@@ -313,8 +296,7 @@ class CParser(PLYParser):
         for tn in typename:
             if not isinstance(tn, c_ast.IdentifierType):
                 if len(typename) > 1:
-                    self._parse_error(
-                        "Invalid multiple types specified", tn.coord)
+                    self._parse_error("Invalid multiple types specified", tn.coord)
                 else:
                     type.type = tn
                     return decl
@@ -323,11 +305,8 @@ class CParser(PLYParser):
             # Functions default to returning int
             #
             if not isinstance(decl.type, c_ast.FuncDecl):
-                self._parse_error(
-                        "Missing type in declaration", decl.coord)
-            type.type = c_ast.IdentifierType(
-                    ['int'],
-                    coord=decl.coord)
+                self._parse_error("Missing type in declaration", decl.coord)
+            type.type = c_ast.IdentifierType(['int'],coord=decl.coord)
         else:
             # At this point, we know that typename is a list of IdentifierType
             # nodes. Concatenate all the names into a single list.
@@ -384,11 +363,7 @@ class CParser(PLYParser):
                 self._parse_error('Invalid declaration', coord)
 
             # Make this look as if it came from "direct_declarator:ID"
-            decls[0]['decl'] = c_ast.TypeDecl(
-                declname=spec['type'][-1].names[0],
-                type=None,
-                quals=None,
-                coord=spec['type'][-1].coord)
+            decls[0]['decl'] = c_ast.TypeDecl(declname=spec['type'][-1].names[0], type=None, quals=None, coord=spec['type'][-1].coord)
             # Remove the "new" type's name from the end of spec['type']
             del spec['type'][-1]
 
@@ -448,16 +423,9 @@ class CParser(PLYParser):
         """
         assert 'typedef' not in spec['storage']
 
-        declaration = self._build_declarations(
-            spec=spec,
-            decls=[dict(decl=decl, init=None)],
-            typedef_namespace=True)[0]
+        declaration = self._build_declarations(spec=spec, decls=[dict(decl=decl, init=None)], typedef_namespace=True)[0]
 
-        return c_ast.FuncDef(
-            decl=declaration,
-            param_decls=param_decls,
-            body=body,
-            coord=decl.coord)
+        return c_ast.FuncDef(decl=declaration, param_decls=param_decls, body=body, coord=decl.coord)
 
     def _select_struct_union_class(self, token):
         """ Given a token (either STRUCT or UNION), selects the
@@ -543,8 +511,7 @@ class CParser(PLYParser):
     def p_pp_directive(self, p):
         """ pp_directive  : PPHASH
         """
-        self._parse_error('Directives not supported yet',
-            self._coord(p.lineno(1)))
+        self._parse_error('Directives not supported yet', self._coord(p.lineno(1)))
 
     # In function definitions, the declarator can be followed by
     # a declaration list, for old "K&R style" function definitios.
@@ -556,26 +523,17 @@ class CParser(PLYParser):
         spec = dict(
             qual=[],
             storage=[],
-            type=[c_ast.IdentifierType(['int'],
-                                       coord=self._coord(p.lineno(1)))],
+            type=[c_ast.IdentifierType(['int'], coord=self._coord(p.lineno(1)))],
             function=[])
 
-        p[0] = self._build_function_definition(
-            spec=spec,
-            decl=p[1],
-            param_decls=p[2],
-            body=p[3])
+        p[0] = self._build_function_definition(spec=spec, decl=p[1], param_decls=p[2], body=p[3])
 
     def p_function_definition_2(self, p):
         """ function_definition : declaration_specifiers declarator declaration_list_opt compound_statement
         """
         spec = p[1]
 
-        p[0] = self._build_function_definition(
-            spec=spec,
-            decl=p[2],
-            param_decls=p[3],
-            body=p[4])
+        p[0] = self._build_function_definition(spec=spec, decl=p[2], param_decls=p[3], body=p[4])
 
     def p_statement(self, p):
         """ statement   : labeled_statement
@@ -611,15 +569,7 @@ class CParser(PLYParser):
             ty = spec['type']
             s_u_or_e = (c_ast.Struct, c_ast.Union, c_ast.Enum)
             if len(ty) == 1 and isinstance(ty[0], s_u_or_e):
-                decls = [c_ast.Decl(
-                    name=None,
-                    quals=spec['qual'],
-                    storage=spec['storage'],
-                    funcspec=spec['function'],
-                    type=ty[0],
-                    init=None,
-                    bitsize=None,
-                    coord=ty[0].coord)]
+                decls = [c_ast.Decl(name=None, quals=spec['qual'], storage=spec['storage'], funcspec=spec['function'], type=ty[0], init=None, bitsize=None, coord=ty[0].coord)]
 
             # However, this case can also occur on redeclared identifiers in
             # an inner scope.  The trouble is that the redeclared type's name
@@ -627,16 +577,10 @@ class CParser(PLYParser):
             # compensates for this.
             #
             else:
-                decls = self._build_declarations(
-                    spec=spec,
-                    decls=[dict(decl=None, init=None)],
-                    typedef_namespace=True)
+                decls = self._build_declarations(spec=spec, decls=[dict(decl=None, init=None)], typedef_namespace=True)
 
         else:
-            decls = self._build_declarations(
-                spec=spec,
-                decls=p[2],
-                typedef_namespace=True)
+            decls = self._build_declarations(spec=spec, decls=p[2], typedef_namespace=True)
 
         p[0] = decls
 
@@ -784,29 +728,20 @@ class CParser(PLYParser):
                                         | struct_or_union TYPEID
         """
         klass = self._select_struct_union_class(p[1])
-        p[0] = klass(
-            name=p[2],
-            decls=None,
-            coord=self._coord(p.lineno(2)))
+        p[0] = klass(name=p[2], decls=None, coord=self._coord(p.lineno(2)))
 
     def p_struct_or_union_specifier_2(self, p):
         """ struct_or_union_specifier : struct_or_union brace_open struct_declaration_list brace_close
         """
         klass = self._select_struct_union_class(p[1])
-        p[0] = klass(
-            name=None,
-            decls=p[3],
-            coord=self._coord(p.lineno(2)))
+        p[0] = klass(name=None, decls=p[3], coord=self._coord(p.lineno(2)))
 
     def p_struct_or_union_specifier_3(self, p):
         """ struct_or_union_specifier   : struct_or_union ID brace_open struct_declaration_list brace_close
                                         | struct_or_union TYPEID brace_open struct_declaration_list brace_close
         """
         klass = self._select_struct_union_class(p[1])
-        p[0] = klass(
-            name=p[2],
-            decls=p[4],
-            coord=self._coord(p.lineno(2)))
+        p[0] = klass(name=p[2], decls=p[4], coord=self._coord(p.lineno(2)))
 
     def p_struct_or_union(self, p):
         """ struct_or_union : STRUCT
@@ -829,9 +764,7 @@ class CParser(PLYParser):
         assert 'typedef' not in spec['storage']
 
         if p[2] is not None:
-            decls = self._build_declarations(
-                spec=spec,
-                decls=p[2])
+            decls = self._build_declarations(spec=spec, decls=p[2])
 
         elif len(spec['type']) == 1:
             # Anonymous struct/union, gcc extension, C1x feature.
@@ -845,18 +778,14 @@ class CParser(PLYParser):
             else:
                 decl_type = c_ast.IdentifierType(node)
 
-            decls = self._build_declarations(
-                spec=spec,
-                decls=[dict(decl=decl_type)])
+            decls = self._build_declarations(spec=spec, decls=[dict(decl=decl_type)])
 
         else:
             # Structure/union members can have the same names as typedefs.
             # The trouble is that the member's name gets grouped into
             # specifier_qualifier_list; _build_declarations compensates.
             #
-            decls = self._build_declarations(
-                spec=spec,
-                decls=[dict(decl=None, init=None)])
+            decls = self._build_declarations(spec=spec, decls=[dict(decl=None, init=None)])
 
         p[0] = decls
 
@@ -870,9 +799,7 @@ class CParser(PLYParser):
         #   typedef int Foo;
         #   struct { Foo Foo[3]; };
         #
-        p[0] = self._build_declarations(
-                spec=p[1],
-                decls=[dict(decl=p[2], init=None)])
+        p[0] = self._build_declarations(spec=p[1], decls=[dict(decl=p[2], init=None)])
 
     def p_struct_declarator_list(self, p):
         """ struct_declarator_list  : struct_declarator
@@ -1572,22 +1499,19 @@ class CParser(PLYParser):
                         | INT_CONST_OCT
                         | INT_CONST_HEX
         """
-        p[0] = c_ast.Constant(
-            'int', p[1], self._coord(p.lineno(1)))
+        p[0] = c_ast.Constant('int', p[1], self._coord(p.lineno(1)))
 
     def p_constant_2(self, p):
         """ constant    : FLOAT_CONST
                         | HEX_FLOAT_CONST
         """
-        p[0] = c_ast.Constant(
-            'float', p[1], self._coord(p.lineno(1)))
+        p[0] = c_ast.Constant('float', p[1], self._coord(p.lineno(1)))
 
     def p_constant_3(self, p):
         """ constant    : CHAR_CONST
                         | WCHAR_CONST
         """
-        p[0] = c_ast.Constant(
-            'char', p[1], self._coord(p.lineno(1)))
+        p[0] = c_ast.Constant('char', p[1], self._coord(p.lineno(1)))
 
     # The "unified" string and wstring literal rules are for supporting
     # concatenation of adjacent string literals.
@@ -1599,8 +1523,7 @@ class CParser(PLYParser):
                                     | unified_string_literal STRING_LITERAL
         """
         if len(p) == 2: # single literal
-            p[0] = c_ast.Constant(
-                'string', p[1], self._coord(p.lineno(1)))
+            p[0] = c_ast.Constant('string', p[1], self._coord(p.lineno(1)))
         else:
             p[1].value = p[1].value[:-1] + p[2][1:]
             p[0] = p[1]
@@ -1610,8 +1533,7 @@ class CParser(PLYParser):
                                     | unified_wstring_literal WSTRING_LITERAL
         """
         if len(p) == 2: # single literal
-            p[0] = c_ast.Constant(
-                'string', p[1], self._coord(p.lineno(1)))
+            p[0] = c_ast.Constant('string', p[1], self._coord(p.lineno(1)))
         else:
             p[1].value = p[1].value.rstrip()[:-1] + p[2][2:]
             p[0] = p[1]
@@ -1635,10 +1557,7 @@ class CParser(PLYParser):
         # _get_yacc_lookahead_token still works!
         #
         if p:
-            self._parse_error(
-                'before: %s' % p.value,
-                self._coord(lineno=p.lineno,
-                            column=self.clex.find_tok_column(p)))
+            self._parse_error('before: %s' % p.value, self._coord(lineno=p.lineno, column=self.clex.find_tok_column(p)))
         else:
             self._parse_error('At end of input', '')
 
