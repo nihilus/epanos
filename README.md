@@ -28,7 +28,7 @@ Tokyo.
 
 ### How?
 
-You will need a version of [IDA][] that is not yet public.  Whatever
+You will need a version of [IDA][].  Whatever
 version comes after 6.5 should contain all the fixes that are needed
 to produce the code used in ElectroPortis.
 
