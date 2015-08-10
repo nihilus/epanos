@@ -1,7 +1,7 @@
-# -----------------------------------------------------------------
+#-----------------------------------------------------------------
 # ** ATTENTION **
 # This code was automatically generated from the file:
-# _c_ast.cfg
+# _c_ast.cfg 
 #
 # Do not modify it directly. Modify the configuration file and
 # run the generator again.
@@ -11,7 +11,7 @@
 #
 # AST Node classes.
 #
-# Copyright (C) 2008-2013, Eli Bendersky
+# Copyright (C) 2008-2012, Eli Bendersky
 # License: BSD
 #-----------------------------------------------------------------
 
@@ -22,7 +22,6 @@ import sys
 class Node(object):
     """ Abstract base class for AST nodes.
     """
-
     def children(self):
         """ A sequence of all children that are Nodes
         """
@@ -31,34 +30,34 @@ class Node(object):
     def show(self, buf=sys.stdout, offset=0, attrnames=False, nodenames=False, showcoord=False, _my_node_name=None):
         """ Pretty print the Node and all its attributes and
             children (recursively) to a buffer.
-
-            buf:
+            
+            buf:   
                 Open IO buffer into which the Node is printed.
-
-            offset:
-                Initial offset (amount of leading spaces)
-
+            
+            offset: 
+                Initial offset (amount of leading spaces) 
+            
             attrnames:
                 True if you want to see the attribute names in
                 name=value pairs. False to only see the values.
-
+                
             nodenames:
-                True if you want to see the actual node names
+                True if you want to see the actual node names 
                 within their parents.
-
+            
             showcoord:
                 Do you want the coordinates of each Node to be
                 displayed.
         """
         lead = ' ' * offset
         if nodenames and _my_node_name is not None:
-            buf.write(lead + self.__class__.__name__ + ' <' + _my_node_name + '>: ')
+            buf.write(lead + self.__class__.__name__+ ' <' + _my_node_name + '>: ')
         else:
-            buf.write(lead + self.__class__.__name__ + ': ')
+            buf.write(lead + self.__class__.__name__+ ': ')
 
         if self.attr_names:
             if attrnames:
-                nvlist = [(n, getattr(self, n)) for n in self.attr_names]
+                nvlist = [(n, getattr(self,n)) for n in self.attr_names]
                 attrstr = ', '.join('%s=%s' % nv for nv in nvlist)
             else:
                 vlist = [getattr(self, n) for n in self.attr_names]
@@ -80,48 +79,47 @@ class Node(object):
 
 
 class NodeVisitor(object):
-    """ A base NodeVisitor class for visiting c_ast nodes.
+    """ A base NodeVisitor class for visiting c_ast nodes. 
         Subclass it and define your own visit_XXX methods, where
-        XXX is the class name you want to visit with these
+        XXX is the class name you want to visit with these 
         methods.
-
+        
         For example:
-
+        
         class ConstantVisitor(NodeVisitor):
             def __init__(self):
                 self.values = []
-
+            
             def visit_Constant(self, node):
                 self.values.append(node.value)
 
-        Creates a list of values of all the constant nodes
+        Creates a list of values of all the constant nodes 
         encountered below the given node. To use it:
-
+        
         cv = ConstantVisitor()
         cv.visit(node)
-
+        
         Notes:
-
-        *   generic_visit() will be called for AST nodes for which
-            no visit_XXX method was defined.
-        *   The children of nodes for which a visit_XXX was
+        
+        *   generic_visit() will be called for AST nodes for which 
+            no visit_XXX method was defined. 
+        *   The children of nodes for which a visit_XXX was 
             defined will not be visited - if you need this, call
-            generic_visit() on the node.
+            generic_visit() on the node. 
             You can use:
                 NodeVisitor.generic_visit(self, node)
         *   Modeled after Python's own AST visiting facilities
             (the ast module of Python 3.0)
     """
-
     def visit(self, node):
-        """ Visit a node.
+        """ Visit a node. 
         """
         method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
         return visitor(node)
-
+        
     def generic_visit(self, node):
-        """ Called if no explicit visitor function exists for a
+        """ Called if no explicit visitor function exists for a 
             node. Implements preorder visiting of the node.
         """
         for c_name, c in node.children():
@@ -129,10 +127,9 @@ class NodeVisitor(object):
 
 
 class ArrayDecl(Node):
-    def __init__(self, type, dim, dim_quals, coord=None):
+    def __init__(self, type, dim, coord=None):
         self.type = type
         self.dim = dim
-        self.dim_quals = dim_quals
         self.coord = coord
 
     def children(self):
@@ -141,8 +138,7 @@ class ArrayDecl(Node):
         if self.dim is not None: nodelist.append(("dim", self.dim))
         return tuple(nodelist)
 
-    attr_names = ('dim_quals',)
-
+    attr_names = ()
 
 class ArrayRef(Node):
     def __init__(self, name, subscript, coord=None):
@@ -157,7 +153,6 @@ class ArrayRef(Node):
         return tuple(nodelist)
 
     attr_names = ()
-
 
 class Assignment(Node):
     def __init__(self, op, lvalue, rvalue, coord=None):
@@ -174,7 +169,6 @@ class Assignment(Node):
 
     attr_names = ('op',)
 
-
 class BinaryOp(Node):
     def __init__(self, op, left, right, coord=None):
         self.op = op
@@ -190,7 +184,6 @@ class BinaryOp(Node):
 
     attr_names = ('op',)
 
-
 class Break(Node):
     def __init__(self, coord=None):
         self.coord = coord
@@ -199,7 +192,6 @@ class Break(Node):
         return ()
 
     attr_names = ()
-
 
 class Case(Node):
     def __init__(self, expr, stmts, coord=None):
@@ -216,7 +208,6 @@ class Case(Node):
 
     attr_names = ()
 
-
 class Cast(Node):
     def __init__(self, to_type, expr, coord=None):
         self.to_type = to_type
@@ -231,7 +222,6 @@ class Cast(Node):
 
     attr_names = ()
 
-
 class Compound(Node):
     def __init__(self, block_items, coord=None):
         self.block_items = block_items
@@ -244,7 +234,6 @@ class Compound(Node):
         return tuple(nodelist)
 
     attr_names = ()
-
 
 class CompoundLiteral(Node):
     def __init__(self, type, init, coord=None):
@@ -260,7 +249,6 @@ class CompoundLiteral(Node):
 
     attr_names = ()
 
-
 class Constant(Node):
     def __init__(self, type, value, coord=None):
         self.type = type
@@ -271,8 +259,7 @@ class Constant(Node):
         nodelist = []
         return tuple(nodelist)
 
-    attr_names = ('type', 'value',)
-
+    attr_names = ('type','value',)
 
 class Continue(Node):
     def __init__(self, coord=None):
@@ -282,7 +269,6 @@ class Continue(Node):
         return ()
 
     attr_names = ()
-
 
 class Decl(Node):
     def __init__(self, name, quals, storage, funcspec, type, init, bitsize, coord=None):
@@ -302,8 +288,7 @@ class Decl(Node):
         if self.bitsize is not None: nodelist.append(("bitsize", self.bitsize))
         return tuple(nodelist)
 
-    attr_names = ('name', 'quals', 'storage', 'funcspec',)
-
+    attr_names = ('name','quals','storage','funcspec',)
 
 class DeclList(Node):
     def __init__(self, decls, coord=None):
@@ -318,7 +303,6 @@ class DeclList(Node):
 
     attr_names = ()
 
-
 class Default(Node):
     def __init__(self, stmts, coord=None):
         self.stmts = stmts
@@ -331,7 +315,6 @@ class Default(Node):
         return tuple(nodelist)
 
     attr_names = ()
-
 
 class DoWhile(Node):
     def __init__(self, cond, stmt, coord=None):
@@ -347,7 +330,6 @@ class DoWhile(Node):
 
     attr_names = ()
 
-
 class EllipsisParam(Node):
     def __init__(self, coord=None):
         self.coord = coord
@@ -357,7 +339,6 @@ class EllipsisParam(Node):
 
     attr_names = ()
 
-
 class EmptyStatement(Node):
     def __init__(self, coord=None):
         self.coord = coord
@@ -366,7 +347,6 @@ class EmptyStatement(Node):
         return ()
 
     attr_names = ()
-
 
 class Enum(Node):
     def __init__(self, name, values, coord=None):
@@ -381,7 +361,6 @@ class Enum(Node):
 
     attr_names = ('name',)
 
-
 class Enumerator(Node):
     def __init__(self, name, value, coord=None):
         self.name = name
@@ -394,7 +373,6 @@ class Enumerator(Node):
         return tuple(nodelist)
 
     attr_names = ('name',)
-
 
 class EnumeratorList(Node):
     def __init__(self, enumerators, coord=None):
@@ -409,7 +387,6 @@ class EnumeratorList(Node):
 
     attr_names = ()
 
-
 class ExprList(Node):
     def __init__(self, exprs, coord=None):
         self.exprs = exprs
@@ -423,7 +400,6 @@ class ExprList(Node):
 
     attr_names = ()
 
-
 class FileAST(Node):
     def __init__(self, ext, coord=None):
         self.ext = ext
@@ -436,7 +412,6 @@ class FileAST(Node):
         return tuple(nodelist)
 
     attr_names = ()
-
 
 class For(Node):
     def __init__(self, init, cond, next, stmt, coord=None):
@@ -456,7 +431,6 @@ class For(Node):
 
     attr_names = ()
 
-
 class FuncCall(Node):
     def __init__(self, name, args, coord=None):
         self.name = name
@@ -471,7 +445,6 @@ class FuncCall(Node):
 
     attr_names = ()
 
-
 class FuncDecl(Node):
     def __init__(self, args, type, coord=None):
         self.args = args
@@ -485,7 +458,6 @@ class FuncDecl(Node):
         return tuple(nodelist)
 
     attr_names = ()
-
 
 class FuncDef(Node):
     def __init__(self, decl, param_decls, body, coord=None):
@@ -504,7 +476,6 @@ class FuncDef(Node):
 
     attr_names = ()
 
-
 class Goto(Node):
     def __init__(self, name, coord=None):
         self.name = name
@@ -515,7 +486,6 @@ class Goto(Node):
         return tuple(nodelist)
 
     attr_names = ('name',)
-
 
 class ID(Node):
     def __init__(self, name, coord=None):
@@ -528,7 +498,6 @@ class ID(Node):
 
     attr_names = ('name',)
 
-
 class IdentifierType(Node):
     def __init__(self, names, coord=None):
         self.names = names
@@ -539,7 +508,6 @@ class IdentifierType(Node):
         return tuple(nodelist)
 
     attr_names = ('names',)
-
 
 class If(Node):
     def __init__(self, cond, iftrue, iffalse, coord=None):
@@ -557,7 +525,6 @@ class If(Node):
 
     attr_names = ()
 
-
 class InitList(Node):
     def __init__(self, exprs, coord=None):
         self.exprs = exprs
@@ -571,7 +538,6 @@ class InitList(Node):
 
     attr_names = ()
 
-
 class Label(Node):
     def __init__(self, name, stmt, coord=None):
         self.name = name
@@ -584,7 +550,6 @@ class Label(Node):
         return tuple(nodelist)
 
     attr_names = ('name',)
-
 
 class NamedInitializer(Node):
     def __init__(self, name, expr, coord=None):
@@ -601,7 +566,6 @@ class NamedInitializer(Node):
 
     attr_names = ()
 
-
 class ParamList(Node):
     def __init__(self, params, coord=None):
         self.params = params
@@ -614,7 +578,6 @@ class ParamList(Node):
         return tuple(nodelist)
 
     attr_names = ()
-
 
 class PtrDecl(Node):
     def __init__(self, quals, type, coord=None):
@@ -629,7 +592,6 @@ class PtrDecl(Node):
 
     attr_names = ('quals',)
 
-
 class Return(Node):
     def __init__(self, expr, coord=None):
         self.expr = expr
@@ -641,7 +603,6 @@ class Return(Node):
         return tuple(nodelist)
 
     attr_names = ()
-
 
 class Struct(Node):
     def __init__(self, name, decls, coord=None):
@@ -656,7 +617,6 @@ class Struct(Node):
         return tuple(nodelist)
 
     attr_names = ('name',)
-
 
 class StructRef(Node):
     def __init__(self, name, type, field, coord=None):
@@ -673,7 +633,6 @@ class StructRef(Node):
 
     attr_names = ('type',)
 
-
 class Switch(Node):
     def __init__(self, cond, stmt, coord=None):
         self.cond = cond
@@ -687,7 +646,6 @@ class Switch(Node):
         return tuple(nodelist)
 
     attr_names = ()
-
 
 class TernaryOp(Node):
     def __init__(self, cond, iftrue, iffalse, coord=None):
@@ -705,7 +663,6 @@ class TernaryOp(Node):
 
     attr_names = ()
 
-
 class TypeDecl(Node):
     def __init__(self, declname, quals, type, coord=None):
         self.declname = declname
@@ -718,8 +675,7 @@ class TypeDecl(Node):
         if self.type is not None: nodelist.append(("type", self.type))
         return tuple(nodelist)
 
-    attr_names = ('declname', 'quals',)
-
+    attr_names = ('declname','quals',)
 
 class Typedef(Node):
     def __init__(self, name, quals, storage, type, coord=None):
@@ -734,8 +690,7 @@ class Typedef(Node):
         if self.type is not None: nodelist.append(("type", self.type))
         return tuple(nodelist)
 
-    attr_names = ('name', 'quals', 'storage',)
-
+    attr_names = ('name','quals','storage',)
 
 class Typename(Node):
     def __init__(self, quals, type, coord=None):
@@ -750,7 +705,6 @@ class Typename(Node):
 
     attr_names = ('quals',)
 
-
 class UnaryOp(Node):
     def __init__(self, op, expr, coord=None):
         self.op = op
@@ -763,7 +717,6 @@ class UnaryOp(Node):
         return tuple(nodelist)
 
     attr_names = ('op',)
-
 
 class Union(Node):
     def __init__(self, name, decls, coord=None):
@@ -778,7 +731,6 @@ class Union(Node):
         return tuple(nodelist)
 
     attr_names = ('name',)
-
 
 class While(Node):
     def __init__(self, cond, stmt, coord=None):
